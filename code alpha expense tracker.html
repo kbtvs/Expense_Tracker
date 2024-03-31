@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Expense Tracker</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 3;
+        background-image: url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT-wYv-WAZ-h27eCr364JYcX8nl_5Sy3BhesQ&usqp=CAU');
+        background-position: center;
+    }
+    .container {
+        max-width: 600px;
+        padding: 20px;
+        border-radius: 5px;
+        background-color: #7FB3D5 ;
+    }
+    h2 {
+        text-align: center;
+    }
+    form {
+        margin-bottom: 20px;
+    }
+    input[type="text"], input[type="number"], input[type="date"] {
+        width: 100%;
+        padding: 8px;
+        margin: 5px 0;
+        box-sizing: border-box;
+    }
+    button {
+        padding: 10px 20px;
+        border: none;
+        background-color: #4CAF50;
+        color: white;
+        cursor: pointer;
+    }
+    button:hover {
+        background-color: #45a049;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    th, td {
+        border-bottom: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }
+    #total {
+        font-weight: bold;
+        margin-top: 20px;
+        font-size: 18px;
+        text-align: left;
+    }
+</style>
+</head>
+<body>
+<div class="container">
+    <h2>Expense Tracker</h2>
+    <form id="expenseForm">
+        <input type="text" id="expenseName" placeholder="Expense Name" required>
+        <input type="number" id="expenseAmount" placeholder="Amount" required>
+        <input type="date" id="expenseDate" required>
+        <button type="submit">Add Expense</button>
+    </form>
+    
+    <table id="expenseTable">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Amount</th>
+                <th>Date</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+    <div id="total"></div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const expenseForm = document.getElementById('expenseForm');
+        const expenseTable = document.getElementById('expenseTable').getElementsByTagName('tbody')[0];
+        const totalDisplay = document.getElementById('total');
+
+        // Load expenses from local storage if available
+        let expenses = JSON.parse(localStorage.getItem('expenses')) || [];
+
+        function renderExpenses() {
+            expenseTable.innerHTML = '';
+            let totalAmount = 0;
+            expenses.forEach(function(expense, index) {
+                totalAmount += parseFloat(expense.amount);
+                const row = expenseTable.insertRow();
+                row.innerHTML = `
+                    <td>${expense.name}</td>
+                    <td>${expense.amount}</td>
+                    <td>${expense.date}</td>
+                    <td><button onclick="editExpense(${index})">Edit</button> <button onclick="deleteExpense(${index})">Delete</button></td>
+                `;
+            });
+            totalDisplay.textContent = `Total: $${totalAmount.toFixed(2)}`;
+            saveExpenses();
+        }
+
+        function saveExpenses() {
+            localStorage.setItem('expenses', JSON.stringify(expenses));
+        }
+
+        function addExpense(name, amount, date) {
+            expenses.push({ name, amount, date });
+            renderExpenses();
+        }
+
+        function editExpense(index) {
+            const expense = expenses[index];
+            document.getElementById('expenseName').value = expense.name;
+            document.getElementById('expenseAmount').value = expense.amount;
+            document.getElementById('expenseDate').value = expense.date;
+
+            // Update the editIndex to the current index
+            window.editIndex = index;
+        }
+
+        function deleteExpense(index) {
+            expenses.splice(index, 1);
+            renderExpenses();
+        }
+
+        expenseForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const name = document.getElementById('expenseName').value.trim();
+            const amount = document.getElementById('expenseAmount').value.trim();
+            const date = document.getElementById('expenseDate').value;
+            if (name && amount && date) {
+                // Check if there's an editIndex, if yes, update expense instead of adding new
+                if (typeof window.editIndex !== 'undefined') {
+                    expenses[window.editIndex] = { name, amount, date };
+                    delete window.editIndex; // Clear the editIndex after update
+                } else {
+                    addExpense(name, amount, date);
+                }
+                expenseForm.reset();
+            } else {
+                alert('Please fill in all fields.');
+            }
+        });
+
+        renderExpenses();
+    });
+</script>
+</body>
+</html>
